@@ -1,0 +1,12 @@
+{% load static %}
+
+<div class="blog-author">
+  <div class="media align-items-center">
+    <img src="{% static "assets/img/profile.png" %}" alt="{{ post.author.username }}">
+    <div class="media-body">
+      <a href="#">
+        <h4>{{ post.author.username }}</h4>
+      </a>
+    </div>
+  </div>
+</div>
