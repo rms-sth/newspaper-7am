@@ -16,8 +16,8 @@ from django.views.generic import (
     UpdateView,
     View,
 )
-
-from newspaper.forms import CommentForm, ContactForm, NewsLetterForm, PostForm
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from newspaper.forms import CommentForm, ContactForm, NewsLetterForm, PostForm, CategoryForm
 from newspaper.models import Category, Post
 
 
@@ -107,10 +107,20 @@ class PostSearchView(View):
         posts = Post.objects.filter(
             Q(title__icontains=query) | Q(content__icontains=query)
         )
+
+        page = request.GET.get("page", 1)
+        paginator = Paginator(posts, 1)
+        try:
+            page_obj = paginator.page(page)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
         return render(
             request,
-            "aznews/list.html",
-            {"query": query, "posts": posts},
+            "aznews/search_list.html",
+            {"query": query, "page_obj": page_obj},
         )
 
 
@@ -131,6 +141,7 @@ class NewsLetterView(View):
                     status=200,
                 )
             else:
+                print(form)
                 return JsonResponse(
                     {
                         "success": False,
@@ -267,3 +278,14 @@ class PostPublishView(LoginRequiredMixin, View):
         post.published_at = timezone.now()
         post.save()
         return redirect("home")
+
+
+class CategoryCreateView(LoginRequiredMixin, CreateView):
+    model = Category
+    form_class = CategoryForm
+    template_name = "news_admin/category_create.html"
+    success_url = reverse_lazy("draft-list")
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user  # logged in user
+        return super().form_valid(form)

@@ -77,4 +77,9 @@ urlpatterns = [
         views.PostUpdateView.as_view(),
         name="post-update",
     ),
+    path(
+        "category-create/",
+        views.CategoryCreateView.as_view(),
+        name="category-create",
+    ),
 ]

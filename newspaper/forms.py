@@ -1,6 +1,6 @@
 from django import forms
 
-from newspaper.models import Contact, NewsLetter, Comment, Post
+from newspaper.models import Contact, NewsLetter, Comment, Post, Category
 from django_summernote.widgets import SummernoteWidget
 
 
@@ -9,11 +9,11 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ("title", "content", "featured_image", "status", "category", "tag")
         widgets = {
-            "title":forms.TextInput(
+            "title": forms.TextInput(
                 attrs={
-                    "class":'form-control',
-                    'required':True,
-                    'placeholder':"Title of your post..."
+                    "class": "form-control",
+                    "required": True,
+                    "placeholder": "Title of your post...",
                 }
             ),
             "content": SummernoteWidget(),
@@ -51,4 +51,10 @@ class ContactForm(forms.ModelForm):
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
+        fields = "__all__"
+
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
         fields = "__all__"

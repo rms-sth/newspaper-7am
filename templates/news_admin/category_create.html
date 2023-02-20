@@ -1,0 +1,10 @@
+{% extends "news_admin/base.html" %}
+
+{% block content %}
+  {% if form.non_field_errors %}<p class="text-danger">{{ form.non_field_errors }}</p>{% endif %}
+  <form action="" method="post" class="post-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Save</button>
+  </form>
+{% endblock content %}
