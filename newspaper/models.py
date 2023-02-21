@@ -65,6 +65,10 @@ class Contact(TimeStampModel):
 
     def __str__(self):
         return self.subject
+    
+    class Meta:
+        ordering = ['created_at']
+        # db_table = 'newsletter'
 
 
 class Comment(TimeStampModel):

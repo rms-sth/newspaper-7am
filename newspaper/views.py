@@ -17,8 +17,22 @@ from django.views.generic import (
     View,
 )
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from newspaper.forms import CommentForm, ContactForm, NewsLetterForm, PostForm, CategoryForm
+from newspaper.forms import (
+    CommentForm,
+    ContactForm,
+    NewsLetterForm,
+    PostForm,
+    CategoryForm,
+)
 from newspaper.models import Category, Post
+
+# ORM => SQL query
+# Post.objects.all() => SELECT * FROM newspaper_post;
+from django.contrib.auth.views import LoginView
+
+
+class CustomLogin(LoginView):
+    template_name = "aznews/login.html"
 
 
 class HomeView(ListView):

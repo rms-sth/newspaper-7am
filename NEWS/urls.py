@@ -18,13 +18,14 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import include, path
-
+from newspaper.views import CustomLogin
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("summernote/", include("django_summernote.urls")),
     path("api/v1/", include("api.urls")),
     path("", include("newspaper.urls")),
-    path("accounts/login/", LoginView.as_view(), name="login"),
+    path("accounts/login/", CustomLogin.as_view(), name="login"),
+    # path("accounts/login/", LoginView.as_view(), name="login"),
     path("accounts/logout/", LogoutView.as_view(), name="logout"),
 ]
 
