@@ -3,6 +3,7 @@
 
 ### Django ###
 venv/
+.vscode/
 *.log
 *.pot
 *.pyc
