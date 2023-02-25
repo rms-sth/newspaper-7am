@@ -60,12 +60,14 @@ class PostSerializer(serializers.ModelSerializer):
             "featured_image",
             "views_count",
             "status",
+            "published_at",
             "category",
             "tag",
             "author",
             "comments",
         ]
         extra_kwargs = {
+            "published_at": {"read_only": True},
             "author": {"read_only": True},
             "views_count": {"read_only": True},
         }
@@ -91,6 +93,10 @@ class NewsLetterSerializer(serializers.ModelSerializer):
     class Meta:
         model = NewsLetter
         fields = "__all__"
+
+
+class PostPublishSerializer(serializers.Serializer):
+    post = serializers.IntegerField()
 
 
 class CommentSerializer(serializers.ModelSerializer):

@@ -18,9 +18,14 @@ router.register("newsletter", views.NewsLetterViewSet)
 urlpatterns = [
     path("", include(router.urls)),
     path(
-        "post/<int:post_id>/comments/",
-        views.PostCommentViewSet.as_view(),
-        name="post-comment",
+        "draft-list/",
+        views.DraftListViewSet.as_view(),
+        name="draft-list",
+    ),
+    path(
+        "post-publish/",
+        views.PostPublishViewSet.as_view(),
+        name="post-publish",
     ),
     path(
         "top-categories/",
@@ -36,6 +41,11 @@ urlpatterns = [
         "post-by-tag/<int:tag_id>/",
         views.PostByTagListViewSet.as_view(),
         name="post-by-tag",
+    ),
+    path(
+        "post/<int:post_id>/comments/",
+        views.PostCommentViewSet.as_view(),
+        name="post-comment",
     ),
     path(
         "api-auth/",

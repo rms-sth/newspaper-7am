@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Group, User
 from django.db.models import Case, F, Q, Sum, When
+from django.utils import timezone
 from rest_framework import exceptions, permissions, status, viewsets
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from api.serializers import (
     ContactSerializer,
     GroupSerializer,
     NewsLetterSerializer,
+    PostPublishSerializer,
     PostSerializer,
     TagSerializer,
     TopCategorySerializer,
@@ -29,7 +31,6 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     queryset = User.objects.all().order_by("-date_joined")  # latest user
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
@@ -44,9 +45,9 @@ class GroupViewSet(viewsets.ModelViewSet):
     API endpoint that allows Group to be viewed or edited.
     """
 
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -54,9 +55,9 @@ class TagViewSet(viewsets.ModelViewSet):
     API endpoint that allows Tag to be viewed or edited.
     """
 
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
@@ -71,9 +72,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     API endpoint that allows Category to be viewed or edited.
     """
 
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
@@ -88,9 +89,9 @@ class PostViewSet(viewsets.ModelViewSet):
     API endpoint that allows Post to be viewed or edited.
     """
 
-    queryset = Post.objects.filter(published_and_active)
-    serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
+    queryset = Post.objects.filter(published_and_active).order_by("-published_at")
+    serializer_class = PostSerializer
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
@@ -111,8 +112,8 @@ class TopCategoriesListViewSet(ListAPIView):
     List all Top categories that has maximum views_count posts
     """
 
-    serializer_class = TopCategorySerializer
     permission_classes = [permissions.AllowAny]
+    serializer_class = TopCategorySerializer
 
     def get_queryset(self):
         top_categories = (
@@ -145,8 +146,8 @@ class PostByCategoryListViewSet(ListAPIView):
     List all Posts by category id
     """
 
-    serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
+    serializer_class = PostSerializer
 
     def get_queryset(self):
         queryset = Post.objects.filter(
@@ -161,8 +162,8 @@ class PostByTagListViewSet(ListAPIView):
     List all Posts by tag id
     """
 
-    serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
+    serializer_class = PostSerializer
 
     def get_queryset(self):
         queryset = Post.objects.filter(
@@ -177,9 +178,9 @@ class ContactViewSet(viewsets.ModelViewSet):
     API endpoint that allows Contact Us to be viewed or created.
     """
 
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action == "create":
@@ -197,9 +198,9 @@ class NewsLetterViewSet(viewsets.ModelViewSet):
     API endpoint that allows NewsLetter Us to be viewed or created.
     """
 
+    permission_classes = [permissions.IsAuthenticated]
     queryset = NewsLetter.objects.all()
     serializer_class = NewsLetterSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action == "create":
@@ -212,13 +213,51 @@ class NewsLetterViewSet(viewsets.ModelViewSet):
         raise exceptions.MethodNotAllowed(request.method)  # raise an exception
 
 
+class DraftListViewSet(ListAPIView):
+    """
+    List all Posts by tag id
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Post.objects.filter(published_at__isnull=True).order_by("-created_at")
+    serializer_class = PostSerializer
+
+
+class PostPublishViewSet(APIView):
+    """
+    API endpoint that allows Comment to be viewed or created in specified post.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostPublishSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            data = serializer.data
+
+            # publish the post
+            post = Post.objects.get(id=data["post"])
+            post.published_at = timezone.now()
+            post.save()
+
+            serialized_post = PostSerializer(post)
+            return Response(
+                {
+                    "success": "Post was successfully published.",
+                    "data": serialized_post.data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+
 class PostCommentViewSet(APIView):
     """
     API endpoint that allows Comment to be viewed or created in specified post.
     """
 
-    serializer_class = CommentSerializer
     permission_classes = [permissions.AllowAny]
+    serializer_class = CommentSerializer
 
     def get(self, request, post_id, *args, **kwargs):
         comments = Comment.objects.filter(post=post_id).order_by("-created_at")
