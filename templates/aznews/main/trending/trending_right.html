@@ -7,12 +7,13 @@
       <div class="trand-right-img">
         <img src="{{ post.featured_image.url }}"
              alt="{{ post.title }}"
-             width="150px"/>
+             width="150px"
+             height="110px"/>
       </div>
       <div class="trand-right-cap">
         <span class="color1">{{ post.category.name }}</span>
-        <h4>
-          <a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a>
+        <h4 title="{{ post.title }}">
+          <a href="{% url 'post-detail' post.pk %}">{{ post.title|truncatechars:45 }}</a>
         </h4>
       </div>
     </div>

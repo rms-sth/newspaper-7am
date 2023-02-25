@@ -11,31 +11,34 @@
                 <ul>
                   <li>
                     <img src="{% static 'assets/img/icon/header_icon1.png' %}" alt="" />
-                    34ºc, Sunny
+                    34ºC, Sunny
                   </li>
                   <li>
                     <img src="{% static 'assets/img/icon/header_icon1.png' %}" alt="" />
-                    Tuesday, 18th June, 2019
+                    {% now "l, mS M, Y" %}
                   </li>
                 </ul>
               </div>
               <div class="header-info-right">
                 <ul class="header-social">
-                  <li>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                  </li>
-                  <li>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                  </li>
-                  <li>
-                    <a href="#"><i class="fab fa-pinterest-p"></i></a>
-                  </li>
-                  <li>
-                    <a href="{% url 'post-create' %}"><i class="fa fa-plus" aria-hidden="true"></i></a>
-                  </li>
-                  <li>
-                    <a href="{% url 'category-create' %}"><i class="fa fa-tags" aria-hidden="true"></i></a>
-                  </li>
+                  {% if user.is_authenticated %}
+                    <li title="Add Category">
+                      <a href="{% url 'category-create' %}"><i class="fa fa-tags" aria-hidden="true"></i></a>
+                    </li>
+                    <li title="Add Post">
+                      <a href="{% url 'post-create' %}"><i class="fas fa-plus"></i></a>
+                    </li>
+                    <li title="Go to Draft list">
+                      <a href="{% url 'draft-list' %}"><i class="fas fa-tasks"></i></a>
+                    </li>
+                    <li title="Logout">
+                      <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i></a>
+                    </li>
+                  {% else %}
+                    <li title="Sign In">
+                      <a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i></a>
+                    </li>
+                  {% endif %}
                 </ul>
               </div>
             </div>
