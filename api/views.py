@@ -1,6 +1,5 @@
 from django.contrib.auth.models import Group, User
 from django.db.models import Case, F, Q, Sum, When
-from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, permissions, status, viewsets
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
@@ -39,9 +38,6 @@ class UserViewSet(viewsets.ModelViewSet):
             ]
         return super().get_permissions()
 
-    # def get_queryset(self):
-    #     return User.objects.all().exclude(id=self.request.user.id).order_by("username")
-
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
@@ -62,6 +58,13 @@ class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            return [
+                permissions.AllowAny(),
+            ]
+        return super().get_permissions()
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
@@ -71,6 +74,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            return [
+                permissions.AllowAny(),
+            ]
+        return super().get_permissions()
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -82,6 +92,19 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            return [
+                permissions.AllowAny(),
+            ]
+        return super().get_permissions()
+
+    def retrieve(self, request, *args, **kwargs):
+        obj = self.get_object()
+        obj.views_count += 1
+        obj.save()
+        return super().retrieve(request, *args, **kwargs)
+
 
 class TopCategoriesListViewSet(ListAPIView):
     """
@@ -89,6 +112,7 @@ class TopCategoriesListViewSet(ListAPIView):
     """
 
     serializer_class = TopCategorySerializer
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         top_categories = (
@@ -102,14 +126,11 @@ class TopCategoriesListViewSet(ListAPIView):
             .order_by("-views_count")
             .values("pk", "name", "max_views")
         )
-        category_ids = [
-            top_category["pk"] for top_category in top_categories
-        ]  # [2,6,5,6]
+        # [2,6,5,6]
+        category_ids = [top_category["pk"] for top_category in top_categories]
         order_by_max_views = Case(
             *[
-                When(
-                    id=category["pk"], then=category["max_views"]
-                )  # When(id=2, then=11), When(id=6,then=2)
+                When(id=category["pk"], then=category["max_views"])
                 for category in top_categories
             ]
         )
@@ -125,7 +146,7 @@ class PostByCategoryListViewSet(ListAPIView):
     """
 
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         queryset = Post.objects.filter(
@@ -141,7 +162,7 @@ class PostByTagListViewSet(ListAPIView):
     """
 
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         queryset = Post.objects.filter(
@@ -160,6 +181,13 @@ class ContactViewSet(viewsets.ModelViewSet):
     serializer_class = ContactSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == "create":
+            return [
+                permissions.AllowAny(),
+            ]
+        return super().get_permissions()
+
     def update(self, request, *args, **kwargs):
         raise exceptions.MethodNotAllowed(request.method)  # raise an exception
 
@@ -173,46 +201,38 @@ class NewsLetterViewSet(viewsets.ModelViewSet):
     serializer_class = NewsLetterSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == "create":
+            return [
+                permissions.AllowAny(),
+            ]
+        return super().get_permissions()
+
     def update(self, request, *args, **kwargs):
         raise exceptions.MethodNotAllowed(request.method)  # raise an exception
 
 
-class PostCommentListViewSet(APIView):
+class PostCommentViewSet(APIView):
     """
     API endpoint that allows Comment to be viewed or created in specified post.
     """
 
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def validate_post(self, post_id):
-        if not post_id:
-            return Response(
-                {"success": "Must specify the post query params. Example: ?post=1"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        else:
-            post = get_object_or_404(Post, pk=post_id)
-            return post
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, post_id, *args, **kwargs):
-        post = self.validate_post(post_id)
-        comments = Comment.objects.filter(post=post).order_by("-created_at")
-        serializer = CommentSerializer(comments, many=True)
+        comments = Comment.objects.filter(post=post_id).order_by("-created_at")
+        serializer = self.serializer_class(comments, many=True)
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,
         )
 
     def post(self, request, post_id, *args, **kwargs):
-        post = self.validate_post(post_id)
-        data = request.data
-        data.update({"post": post.id})
-        serializer = self.serializer_class(data=data)
+        request.data.update({"post": post_id})
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            data.update({"post": post})
-            comment = Comment.objects.create(**data)
-            serializer = CommentSerializer(comment)
+            serializer.save()
             return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED,

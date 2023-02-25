@@ -19,8 +19,8 @@ urlpatterns = [
     path("", include(router.urls)),
     path(
         "post/<int:post_id>/comments/",
-        views.PostCommentListViewSet.as_view(),
-        name="post-comment-list",
+        views.PostCommentViewSet.as_view(),
+        name="post-comment",
     ),
     path(
         "top-categories/",
